@@ -3,7 +3,12 @@
 var EventEmitter = require('events').EventEmitter;
 
 function ExecStack() {
-    this.stack = [];
+    this._stack = [];
+    this._config = {
+        'strict': false
+    }
+    
+    for(var prop in arguments[0]) this._config[prop] = arguments[0][prop];
 
     ExecStack.prototype.push = function() {
         var args = Array.prototype.slice.call(arguments);
@@ -11,12 +16,12 @@ function ExecStack() {
         
         for(var i=0; i<1; i++) {
             var callback = typeof args[i] === 'function' ? args[i] : function(){};
-            return (this.stack.push({'event': event, 'callback': callback}) - 1);
+            return (this._stack.push({'event': event, 'callback': callback}) - 1);
         }
     }
     
     ExecStack.prototype.remove = function() {
-        this.stack.splice(arguments[0], 1);
+        this._stack.splice(arguments[0], 1);
     }
     
     ExecStack.prototype.execute = function(event) {
@@ -26,10 +31,10 @@ function ExecStack() {
         var self = this;
         
         controller.on('next', function(i) {
-            if(i > self.stack.length) return;
-            else if(typeof self.stack[i] === 'undefined') return controller.emit('next', i + 1);
-            else if((self.stack[i].event !== event && self.stack[i].event !== '<all>' ) || typeof self.stack[i].callback !== 'function') return controller.emit('next', i + 1);
-            
+            if(i > self._stack.length) return;
+            else if(typeof self._stack[i] === 'undefined') return controller.emit('next', i + 1);
+            else if((self._stack[i].event !== event && (self._config.strict ? true : self._stack[i].event !== '<all>')) || typeof self._stack[i].callback !== 'function') return controller.emit('next', i + 1);
+
             var currArgs = args.slice();
             var context = typeof args[0] === 'object' ? currArgs.shift() : {};
             
@@ -37,12 +42,11 @@ function ExecStack() {
                 controller.emit('next', i + 1);
             });
             
-            self.stack[i].callback.apply(context, currArgs);
+            self._stack[i].callback.apply(context, currArgs);
         });
         
         controller.emit('next', 0);
     }
-    
 }
 
 module.exports = ExecStack;

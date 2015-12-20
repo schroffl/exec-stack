@@ -1,5 +1,5 @@
 var ExecStack = require('../index.js');
-var stack = new ExecStack();
+var stack = new ExecStack({'strict': true});
 
 stack.push(function(data, next) {
     console.log('1');
@@ -21,6 +21,4 @@ stack.execute(this, {'this': ['is', 'a', 'test']});
 // OUTPUT: 2
 
 stack.execute('my_event', this, {'this': ['is', 'a', 'test']});
-// OUTPUT: 1
-// OUTPUT: 2
 // OUTPUT: { this: [ 'is', 'a', 'test' ] }

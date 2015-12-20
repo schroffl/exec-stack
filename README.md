@@ -32,6 +32,12 @@ stack.execute('event');
 // OUTPUT: This is called whenever `event` is being executed!
 ```
 
+## <a name="options"></a> Options
+Options are passed to the constructor.
+
+### <a name="option-strict"></a> strict (*false*)
+If true, **only** functions subscribed to the executed event are being called by [.execute()](#method-execute).
+
 ## <a name="methods"></a> Methods
 Optional arguments are written in *cursive*.
 
