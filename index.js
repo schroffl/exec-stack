@@ -24,14 +24,15 @@ function ExecStack() {
         this._stack.splice(arguments[0], 1);
     }
     
-    ExecStack.prototype.execute = function(event) {
+    ExecStack.prototype.execute = function(event, callbackFunction) {
         var args = Array.prototype.slice.call(arguments);
         var controller = new EventEmitter();
         var event = typeof args[0] === 'string' ? args.shift() : '<all>';
+        var callbackFunction = typeof args[0] === 'function' ? args.shift() : function(){};
         var self = this;
         
         controller.on('next', function(i) {
-            if(i > self._stack.length) return;
+            if(i > self._stack.length) return callbackFunction();
             else if(typeof self._stack[i] === 'undefined') return controller.emit('next', i + 1);
             else if((self._stack[i].event !== event && (self._config.strict ? true : self._stack[i].event !== '<all>')) || typeof self._stack[i].callback !== 'function') return controller.emit('next', i + 1);
 

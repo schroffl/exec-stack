@@ -49,6 +49,7 @@ Returns the position of the item in the stack.
 Removes a specified item from the stack.
 The item is being referenced by a number representing its position, just like in an array.
 
-### <a name="method-execute"></a> .execute(*event*, *context*, [...])
-Execute the stack in the given context (context is set to an empty object by default).  
+### <a name="method-execute"></a> .execute(*event*, *callback*, *context*, [...])
+Execute the stack in the given context (context is set to an empty object by default). 
+If *callback* is a function, it will be called when the stack has finished.  
 Any other argument that is given to `.execute()` will also be passed to the functions in the stack.  
