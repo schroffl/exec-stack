@@ -8,48 +8,45 @@ $ npm install exec-stack
 
 ## <a name="example"></a> Example
 ```javascript
-var ExecStack = require('exec-stack');
+const ExecStack = require('exec-stack');
 ```
 
 ```javascript
-var stack = new ExecStack();
+const stack = new ExecStack();
 
-stack.push(function(next) {
-    console.log('This is called for every execution of the stack!');
-    next();
+stack.use('cars', next => {
+	console.log('I\'m specifically interested in cars');
+	next();
 });
 
-stack.push('event', function(next) {
-    console.log('This is called whenever `event` is being executed!');
-    next();
+stack.use((event, next) => {
+	console.log('I\'m generic. Hence interested in anything, also', event);
+	next();
 });
 
-stack.execute(); 
-// OUTPUT: This is called for every execution of the stack!
-
-stack.execute('event');
-// OUTPUT: This is called for every execution of the stack!
-// OUTPUT: This is called whenever `event` is being executed!
+stack.run('cars');
+stack.run('bikes').then(console.log('Done!'));
 ```
 
-## <a name="options"></a> Options
-Options are passed to the constructor.
-
-### <a name="option-strict"></a> strict (*false*)
-If true, **only** functions subscribed to the executed event are being called by [.execute()](#method-execute).
+Output:
+```
+I'm specifically interested in cars
+I'm generic. Hence interested in anything, also cars
+I'm generic. Hence interested in anything, also bikes
+Done!
+```
 
 ## <a name="methods"></a> Methods
 Optional arguments are written in *cursive*.
 
-### <a name="method-push"></a> .push(*event*, callback)
-Push a function on the stack. If *event* is ommited, the callback will be called for every execution of the stack.
-Returns the position of the item in the stack.
+### <a name="method-push"></a> .use(*event*, callback)
+Push a middleware to the stack. If *event* is ommited, the callback will be called for every execution of the stack.
+Returns the position of the middleware in the stack.
 
-### <a name="method-remove"></a> .remove(item)
-Removes a specified item from the stack.
-The item is being referenced by a number representing its position, just like in an array.
+### <a name="method-remove"></a> .unuse(position)
+Removes a specified middleware from the stack.
+The middleware is being referenced by a number representing its position in the stack.
 
-### <a name="method-execute"></a> .execute(*event*, *callback*, *context*, [...])
-Execute the stack in the given context (context is set to an empty object by default). 
-If *callback* is a function, it will be called when the stack has finished.  
-Any other argument that is given to `.execute()` will also be passed to the functions in the stack.  
+### <a name="method-execute"></a> .run(*event*, ...args)
+Any other argument that is given to `.execute()` will also be passed to the functions in the stack.
+Returns a promise that is being resolved after the execution
