@@ -1,52 +1,106 @@
-"use strict";
+'use strict';
 
-var EventEmitter = require('events').EventEmitter;
+const EventEmitter = require('events').EventEmitter;
+const ANY_EVENT = 0xFF; // A representative for any event
 
-function ExecStack() {
-    this._stack = [];
-    this._config = {
-        'strict': false
+class ExecStack {
+
+    /**
+     * @author schroffl
+     * 
+     * @constructor
+     *
+     * @returns A new instance of ExecStack
+     */
+
+    constructor() {
+        this._stack = [];
     }
-    
-    for(var prop in arguments[0]) this._config[prop] = arguments[0][prop];
 
-    ExecStack.prototype.push = function() {
-        var args = Array.prototype.slice.call(arguments);
-        var event = typeof args[0] === 'string' ? args.shift() : '<all>';
+    /**
+     * Push a middleware to the stack
+     * 
+     * @author schroffl
+     *
+     * @param {String} [event=ANY_EVENT] - The specific event to listen for
+     * @param {Function} callback - A function to be called on execution of the stack
+     *
+     * @returns The position of the middleware in the stack
+     */
+
+    use() {
+        const args = Array.from(arguments);
         
-        for(var i=0; i<1; i++) {
-            var callback = typeof args[i] === 'function' ? args[i] : function(){};
-            return (this._stack.push({'event': event, 'callback': callback}) - 1);
-        }
+        let event = typeof args[0] === 'function' ? ANY_EVENT : args.shift(),
+            callback = typeof args[0] === 'function' ? args.shift() : () => {};
+
+        return this._stack.push({ event, callback });
     }
-    
-    ExecStack.prototype.remove = function() {
+
+    /**
+     * Remove a middleware from the stack
+     * 
+     * @author schroffl
+     *
+     * @param {Number} position - The position of the middleware in the stack
+     */
+
+    unuse() {
         this._stack.splice(arguments[0], 1);
     }
-    
-    ExecStack.prototype.execute = function(event, callbackFunction) {
-        var args = Array.prototype.slice.call(arguments);
-        var controller = new EventEmitter();
-        var event = typeof args[0] === 'string' ? args.shift() : '<all>';
-        var callbackFunction = typeof args[0] === 'function' ? args.shift() : function(){};
-        var self = this;
-        
-        controller.on('next', function(i) {
-            if(i > self._stack.length) return callbackFunction();
-            else if(typeof self._stack[i] === 'undefined') return controller.emit('next', i + 1);
-            else if((self._stack[i].event !== event && (self._config.strict ? true : self._stack[i].event !== '<all>')) || typeof self._stack[i].callback !== 'function') return controller.emit('next', i + 1);
 
-            var currArgs = args.slice();
-            var context = typeof args[0] === 'object' ? currArgs.shift() : {};
-            
-            currArgs.push(function() {
-                controller.emit('next', i + 1);
+    /**
+     * Execute the stack
+     * 
+     * @author schroffl
+     * 
+     * @param {String} [event=ANY_EVENT] - The event to propagate
+     *
+     * @returns A promise being resolved when the stack has been fully traversed
+     */
+
+    run() {
+        const args = Array.from(arguments),
+              controller = new EventEmitter();
+
+        let event = typeof args[0] === 'function' ? ANY_EVENT : args.shift(),
+            resolve = null, 
+            reject = null,
+            promise = new Promise((res, rej) => {
+                resolve = res;
+                reject = rej;
             });
-            
-            self._stack[i].callback.apply(context, currArgs);
+
+        controller.on('next', i => {
+            let current = this._stack[i];
+
+            // If i exceeds the amount of functions on the stack => abort
+            if(i > this._stack.length)
+                return resolve();
+            else if(!current)
+                return controller.emit('next', i + 1);
+            // If the middleware is neither listening for all events nor the specified one => continue
+            else if(current.event !== ANY_EVENT && current.event !== event)
+                return controller.emit('next', i + 1);
+
+            let passArgs = args.slice();
+
+            // If the middleware is listening for all events tell it what it's getting notified about
+            if(current.event === ANY_EVENT) passArgs.unshift(event);
+
+            const next = () => controller.emit('next', i + 1);
+            next.throw = err => reject(err);
+
+            // Push the "next" function
+            passArgs.push(next);
+
+            current.callback.apply({}, passArgs);
         });
-        
+
+        // Start the snowball
         controller.emit('next', 0);
+
+        return promise;
     }
 }
 
