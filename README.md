@@ -40,13 +40,20 @@ Done!
 Optional arguments are written in *cursive*.
 
 ### <a name="method-push"></a> .use(*event*, callback)
-Push a middleware to the stack. If *event* is ommited, the callback will be called for every execution of the stack.
+Push a middleware to the stack. If *event* is omitted, the callback will be called for every execution of the stack.  
 Returns the position of the middleware in the stack.
 
 ### <a name="method-remove"></a> .unuse(position)
 Removes a specified middleware from the stack.
 The middleware is being referenced by a number representing its position in the stack.
 
-### <a name="method-execute"></a> .run(*event*, ...args)
-Any other argument that is given to `.execute()` will also be passed to the functions in the stack.
-Returns a promise that is being resolved after the execution
+### <a name="method-run"></a> .run(*event*, ...args)
+Any other argument that is given to `.execute()` will also be passed to the functions in the stack.  
+Returns a promise that is being resolved after everything has finished.  
+If any middleware calls next.throw() the promise will be rejected.
+
+### <a name="method-context"></a> .context(*context*)
+Set the context to be applied to middleware. When *context* is omitted it will be cleared to an empty object.
+
+## Breaking the loop
+If you want to stop the execution of the stack use ```next.throw(*error*)``` which also will reject the promise returned by .run()
