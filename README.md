@@ -48,7 +48,7 @@ Removes a specified middleware from the stack.
 The middleware is being referenced by a number representing its position in the stack.
 
 ### <a name="method-run"></a> .run(*event*, ...args)
-Any other argument that is given to `.execute()` will also be passed to the functions in the stack.  
+Any other argument that is given to `.run()` will also be passed to the functions in the stack.  
 Returns a promise that is being resolved after everything has finished.  
 If any middleware calls next.throw() the promise will be rejected.
 
