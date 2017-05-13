@@ -45,11 +45,11 @@ Returns the position of the middleware in the stack.
 
 ### <a name="method-remove"></a> .unuse(position)
 Removes a specified middleware from the stack.
-The middleware is being referenced by a number representing its position in the stack.
+The middleware is referenced by its index in the stack.
 
 ### <a name="method-run"></a> .run(*event*, ...args)
 Any other argument that is given to `.run()` will also be passed to the functions in the stack.  
-Returns a promise that is being resolved after everything has finished.  
+Returns a promise that will resolve after every middleware has finished.  
 If any middleware calls next.throw() the promise will be rejected.
 
 ### <a name="method-context"></a> .context(*context*)
